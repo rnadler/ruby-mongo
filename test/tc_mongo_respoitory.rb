@@ -5,12 +5,16 @@ TEST_DATA = [
     {int: 1, string: 'XXX'},
     {int: 2, string: 'ZZZ'},
     {int: 3, string: 'ZZZ'}
-]
+].freeze
+
 class MongoRepositoryTest < Test::Unit::TestCase
+  HOST = 'localhost'
+  DATABASE = 'ruby_test'
   COLLECTION = 'test'
+
   def setup
-    @sut = MongoRepository.new('localhost', 'ruby_test')
-    assert(!@sut.nil?)
+    @sut = MongoRepository.new(HOST, DATABASE)
+    assert_not_nil(@sut)
     @sut.drop
   end
 
@@ -47,6 +51,15 @@ class MongoRepositoryTest < Test::Unit::TestCase
     result = @sut.find(COLLECTION, string: 'ZZZ')
     assert_equal(2, result.count)
     assert_equal(2, result.first[:int])
+  end
+
+  def test_replace
+    assert_equal(3, @sut.add(COLLECTION, TEST_DATA))
+    orig = @sut.find(COLLECTION, string: 'XXX').first
+    doc = @sut.replace(COLLECTION, {string: orig[:string]},  {int: 10, string: 'XXX'})
+    assert_equal(1, orig[:int])
+    assert_equal(10, doc[:int])
+    assert_equal(3, @sut.collection(COLLECTION).count)
   end
 
 end
