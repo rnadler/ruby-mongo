@@ -62,4 +62,24 @@ class MongoRepositoryTest < Test::Unit::TestCase
     assert_equal(3, @sut.collection(COLLECTION).count)
   end
 
+  def test_create_or_replace
+    assert_equal(1, @sut.add(COLLECTION, TEST_DATA[0]))
+    orig = @sut.find(COLLECTION, string: 'XXX').first
+    doc = @sut.create_or_replace(COLLECTION, {string: orig[:string]},  {int: 10, string: 'XXX'})
+    assert_equal(1, orig[:int])
+    assert_equal(10, doc[:int])
+    assert_equal(1, @sut.collection(COLLECTION).count)
+    doc = @sut.create_or_replace(COLLECTION, {int: 11},  {int: 11, string: 'XXX'})
+    assert_equal(11, doc[:int])
+    assert_equal(2, @sut.collection(COLLECTION).count)
+    # Does not allow data to be an Array
+    assert_raise RuntimeError do
+      @sut.create_or_replace(COLLECTION, {}, [])
+    end
+    # Only supports single document updates
+    assert_raise RuntimeError do
+      @sut.create_or_replace(COLLECTION, {string: 'XXX'}, {})
+    end
+  end
+
 end

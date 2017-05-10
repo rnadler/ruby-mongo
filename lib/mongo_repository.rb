@@ -26,7 +26,25 @@ class MongoRepository
   end
 
   def replace(collection, query, data)
-    find(collection, query).find_one_and_replace(data, return_document: :after)
+    find_one_and_replace(find(collection, query), data)
+  end
+
+  # Only supports single documents
+  def create_or_replace(collection, query, data)
+    raise "create_or_replace: data can not be an array!" if data.kind_of?(Array)
+    found = find(collection, query)
+    raise "create_or_replace only supports a single document. #{query} found #{found.count} results!" if found.count > 1
+    if found.count == 0
+      add(collection, data)
+      find(collection, query).first
+    else
+      find_one_and_replace(found, data)
+    end
+  end
+
+  private
+  def find_one_and_replace(find_result, data)
+    find_result.find_one_and_replace(data, return_document: :after)
   end
 
 end
